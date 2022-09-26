@@ -53,6 +53,8 @@ test('all arguments', () => {
     'url': 'https://codecov.enterprise.com',
     'verbose': 't',
     'working-directory': 'src',
+    'xcode': 'true',
+    'xcode_archive_path': '/test.xcresult',
   };
 
   for (const env of Object.keys(envs)) {
@@ -85,11 +87,11 @@ test('all arguments', () => {
     '-F',
     'test2',
     '-g',
-    '--ga',
+    '--gcovArgs',
     '-v',
-    '--gi',
+    '--gcovIgnore',
     '*.fake',
-    '--gI',
+    '--gcovInclude',
     'real_file',
     '-B',
     'thomasrockhu/test',
@@ -110,10 +112,94 @@ test('all arguments', () => {
     '-u',
     'https://codecov.enterprise.com',
     '-v',
+    '--xc',
+    '--xp',
+    '/test.xcresult',
   ]);
   expect(failCi).toBeTruthy();
 
   for (const env of Object.keys(envs)) {
     delete process.env['INPUT_' + env.toUpperCase()];
   }
+});
+
+describe('trim arguments after splitting them', () => {
+  const baseExpectation = [
+    '-n',
+    expect.stringContaining(''),
+    '-Q',
+    expect.stringContaining('github-action'),
+  ];
+
+  test('files', () => {
+    const envs = {'files': './client-coverage.txt, ./lcov.info'};
+
+    for (const [name, value] of Object.entries(envs)) {
+      process.env['INPUT_' + name.toUpperCase()] = value;
+    }
+
+    const {execArgs} = buildExec();
+
+    expect(execArgs).toEqual(
+        expect.arrayContaining([
+          ...baseExpectation,
+          '-f',
+          './client-coverage.txt',
+          '-f',
+          './lcov.info',
+        ]),
+    );
+
+    for (const env of Object.keys(envs)) {
+      delete process.env['INPUT_' + env.toUpperCase()];
+    }
+  });
+
+  test('flags', () => {
+    const envs = {'flags': 'ios, mobile'};
+
+    for (const [name, value] of Object.entries(envs)) {
+      process.env['INPUT_' + name.toUpperCase()] = value;
+    }
+
+    const {execArgs} = buildExec();
+
+    expect(execArgs).toEqual(
+        expect.arrayContaining([
+          ...baseExpectation,
+          '-F',
+          'ios',
+          '-F',
+          'mobile',
+        ]),
+    );
+
+    for (const env of Object.keys(envs)) {
+      delete process.env['INPUT_' + env.toUpperCase()];
+    }
+  });
+
+  test('functionalities', () => {
+    const envs = {'functionalities': 'network, gcov'};
+
+    for (const [name, value] of Object.entries(envs)) {
+      process.env['INPUT_' + name.toUpperCase()] = value;
+    }
+
+    const {execArgs} = buildExec();
+
+    expect(execArgs).toEqual(
+        expect.arrayContaining([
+          ...baseExpectation,
+          '-X',
+          'network',
+          '-X',
+          'gcov',
+        ]),
+    );
+
+    for (const env of Object.keys(envs)) {
+      delete process.env['INPUT_' + env.toUpperCase()];
+    }
+  });
 });

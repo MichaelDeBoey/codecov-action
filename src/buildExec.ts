@@ -45,6 +45,8 @@ const buildExec = () => {
   const url = core.getInput('url');
   const verbose = isTrue(core.getInput('verbose'));
   const workingDir = core.getInput('working-directory');
+  const xcode = core.getInput('xcode');
+  const xcodeArchivePath = core.getInput('xcode_archive_path');
 
   const execArgs = [];
   execArgs.push(
@@ -89,7 +91,7 @@ const buildExec = () => {
     execArgs.push('-e', envVarsArg.join(','));
   }
   if (functionalities) {
-    functionalities.split(',').forEach((f) => {
+    functionalities.split(',').map((f) => f.trim()).forEach((f) => {
       execArgs.push('-X', `${f}`);
     });
   }
@@ -100,12 +102,12 @@ const buildExec = () => {
     execArgs.push('-f', `${file}`);
   }
   if (files) {
-    files.split(',').forEach((f) => {
+    files.split(',').map((f) => f.trim()).forEach((f) => {
       execArgs.push('-f', `${f}`);
     });
   }
   if (flags) {
-    flags.split(',').forEach((f) => {
+    flags.split(',').map((f) => f.trim()).forEach((f) => {
       execArgs.push('-F', `${f}`);
     });
   }
@@ -114,13 +116,13 @@ const buildExec = () => {
     execArgs.push('-g');
   }
   if (gcovArgs) {
-    execArgs.push('--ga', `${gcovArgs}`);
+    execArgs.push('--gcovArgs', `${gcovArgs}`);
   }
   if (gcovIgnore) {
-    execArgs.push('--gi', `${gcovIgnore}`);
+    execArgs.push('--gcovIgnore', `${gcovIgnore}`);
   }
   if (gcovInclude) {
-    execArgs.push('--gI', `${gcovInclude}`);
+    execArgs.push('--gcovInclude', `${gcovInclude}`);
   }
 
   if (overrideBranch) {
@@ -165,12 +167,20 @@ const buildExec = () => {
   if (workingDir) {
     options.cwd = workingDir;
   }
+  if (xcode && xcodeArchivePath) {
+    execArgs.push('--xc');
+    execArgs.push('--xp', `${xcodeArchivePath}`);
+  }
 
   if (uploaderVersion == '') {
     uploaderVersion = 'latest';
   }
 
-  return {execArgs, options, failCi, os, uploaderVersion};
+  if (verbose) {
+    console.debug({execArgs});
+  }
+
+  return {execArgs, options, failCi, os, uploaderVersion, verbose};
 };
 
 export default buildExec;
